@@ -1,7 +1,7 @@
 # Laximota
 A discord bot made using DiscordJS.
 
-### Ideas for the bot.
+### Goals for the bot.
 
 1) One word story, and when someone breaks the chain the story time ends and the bot compiles all the words that have been sent into a story in one message.
 
