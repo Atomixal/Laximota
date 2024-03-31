@@ -84,7 +84,7 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 client.on("messageCreate", async (message) => {
-    // Message counting and XP system logic
+    // Message counting logic
 });
 
 client.login(TOKEN);
