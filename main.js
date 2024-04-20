@@ -1,15 +1,19 @@
-const { Client, Intents, CachedManager } = require('discord.js');
+const { Client, Intents, CachedManager, ModalBuilder } = require('discord.js');
 const { TOKEN } = require('./config.json');
 const { SlashCommandBuilder, messageLink } = require('@discordjs/builders');
 const { QuickDB } = require('quick.db');
+
+function randomIntFromInterval(lowerBound, upperBound) {
+    return Math.floor(Math.random() * (upperBound - lowerBound + 1) + min);
+}
 
 const db = new QuickDB();
 
 const client = new Client({
     intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MEMBERS
+        IntentsBitField.FLAGS.GUILDS,
+        IntentsBitField.FLAGS.GUILD_MESSAGES,
+        IntentsBitField.FLAGS.GUILD_MEMBERS
     ]
 });
 
@@ -44,8 +48,8 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if (commandName === 'math_question') {
-        let num1 = Math.floor(Math.random() * 100) + 1; 
-        let num2 = Math.floor(Math.random() * 100) + 1; 
+        let num1 = randomIntFromInterval(1, 100)
+        let num2 = randomIntFromInterval(1, 100)
     
         let correctAnswer = num1 + num2;
     
