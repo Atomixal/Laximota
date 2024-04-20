@@ -1,19 +1,20 @@
-const { Client, Intents, CachedManager, ModalBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, CachedManager, ModalBuilder } = require('discord.js');
 const { TOKEN } = require('./config.json');
 const { SlashCommandBuilder, messageLink } = require('@discordjs/builders');
-const { QuickDB } = require('quick.db');
 
 function randomIntFromInterval(lowerBound, upperBound) {
     return Math.floor(Math.random() * (upperBound - lowerBound + 1) + min);
-}
+}   
 
-const db = new QuickDB();
+function CollectionFilter(response, correctAnswer) {
+    return !response.author.bot && parseInt(response.content) === correctAnswer; 
+}
 
 const client = new Client({
     intents: [
-        IntentsBitField.FLAGS.GUILDS,
-        IntentsBitField.FLAGS.GUILD_MESSAGES,
-        IntentsBitField.FLAGS.GUILD_MEMBERS
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMembers
     ]
 });
 
@@ -28,13 +29,16 @@ client.on("ready", async () => {
     const credits = new SlashCommandBuilder()
         .setName('credits')
         .setDescription('Returns the credits for everyone who contributed to it.');
-    const math_question = new SlashCommandBuilder()
-        .setName('math_question')
-        .setDescription('Returns a math question.');
-    const message_count = new SlashCommandBuilder()
-        .setName('message_count')
-        .setDescription('Outputs a list of who has the most messages sent in the server,');
+    const addition_question = new SlashCommandBuilder()
+        .setName('addition_question')
+        .setDescription('Returns an addition question.')
+    const subtraction_question = new SlashCommandBuilder()
+        .setName('subtraction_question')
+        .setDescription('Returns a subtraction question.')
 });
+
+
+/* Make lots of maths questions of different types, that's what this bot will do now. Start with the simple one and go up to like basic calc. */
 
 const scores = {};
 
@@ -47,7 +51,7 @@ client.on('interactionCreate', async (interaction) => {
         interaction.reply(`Pong! Latency is ${Date.now() - interaction.createdTimestamp}ms, and API latency is ${Math.round(client.ws.ping)}ms.`);
     }
 
-    if (commandName === 'math_question') {
+    if (commandName === 'addition_question') {
         let num1 = randomIntFromInterval(1, 100)
         let num2 = randomIntFromInterval(1, 100)
     
@@ -55,12 +59,8 @@ client.on('interactionCreate', async (interaction) => {
     
         interaction.reply(`What is ${num1} + ${num2}?`)
             .then(() => {
-                const collectorFilter = response => {
-                    return !response.author.bot && parseInt(response.content) === correctAnswer; 
-                };
-    
                 // Await a single response from the user
-                interaction.channel.awaitMessages({ filter: collectorFilter, max: 1, time: 30000, errors: ['time'] })
+                interaction.channel.awaitMessages({ filter: CollectionFilter(response, correctAnswer), max: 1, time: 30000, errors: ['time'] })
                     .then(collected => {
                         interaction.channel.send(`${collected.first().author} got the correct answer!`);
                         scores[collected.first().author.id] = (scores[collected.first().author.id] || 0) + 1;
@@ -78,6 +78,33 @@ client.on('interactionCreate', async (interaction) => {
                     }); 
             });
     }
+
+    if (commandName === 'subtraction_question') {
+        let num1 = randomIntFromInterval(1, 100)
+        let num2 = randomIntFromInterval(1, 100)
+        
+        let correctAnswer = num1 - num2
+
+        interaction.reply(`What is ${num1} - ${num2}`)
+            .then(() => {
+                interaction.channel.awaitMessages({ filter: CollectionFilter(response, correctAnswer), max: 1, time: 30000, errors: ['time'] })
+                    .then(collected => {
+                        interaction.channel.send(`${collected.first().author} got the correct answer!`);
+                        scores[collected.first().author.id] = (scores[collected.first().author.id] || 0) + 1;
+
+                        scoresArray = Object.entries(scores);
+                        
+                        scoresArray.sort((a, b) => b[1] - a[1]);
+
+                        [userId, userScore] = scoresArray[0];
+
+                        interaction.channel.send(`<@${userId}> is in the lead with ${userScore} point(s)!`);    
+                    })
+                    .catch(() => {
+                        interaction.followUp(`Looks like nobody got the answer this time. The correct answer was ${correctAnswer}`);
+                    }); 
+            })
+    }
     
     if (commandName === 'credits') { 
         interaction.reply('Made by <@584844292137418763> using Discord.js. Thank you for using Laximota <3.');
@@ -85,11 +112,6 @@ client.on('interactionCreate', async (interaction) => {
 
 });
 
-
-client.on("messageCreate", async(message) => { // Message counting system, will update to have some sort of xp system.
-    const authorId = message.author.id;
-    db.add(`messageCount_${message.author.id}`, 1);
-})
  
 client.login(TOKEN);
     
